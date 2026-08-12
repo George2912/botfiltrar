@@ -4,7 +4,7 @@ import re
 from typing import List
 
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from bradescard_api import BradesAPI
 from config import TELEGRAM_BOT_TOKEN, MAX_TARJETAS_PER_REQUEST, WORKER_LIMIT, is_allowed_user
@@ -14,6 +14,7 @@ from queue_manager import UserConcurrencyManager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+unauthorized_attempts = {}
 queue_manager = UserConcurrencyManager(max_global_workers=WORKER_LIMIT)
 
 
@@ -97,11 +98,48 @@ async def process_filter_batch_live(user_id: int, tarjetas: List[str], progress_
     return []
 
 
+async def handle_unauthorized_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    user_name = update.effective_user.first_name or "amigo"
+    attempts = unauthorized_attempts.get(user_id, 0) + 1
+    unauthorized_attempts[user_id] = attempts
+
+    logger.warning(f"Usuario no autorizado intentó interactuar: {user_id} ({user_name}) intento #{attempts}")
+
+    if attempts == 1:
+        await update.message.reply_text(
+            f"❌ {user_name}, no estás en la lista de usuarios permitidos. "
+            "Sal del bot y no vuelvas a molestar, aquí no entra cualquiera."
+        )
+        return
+
+    if attempts == 2:
+        await update.message.reply_text(
+            f"❌ {user_name}, ya te avisé. Sigue intentando y te ignoro."
+        )
+        return
+
+    # Tercera vez en adelante: silencio total para evitar spam.
+    logger.warning(f"Ignorando usuario no autorizado por spam: {user_id} ({user_name})")
+    return
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    if not is_allowed_user(user_id):
+        await handle_unauthorized_user(update, context)
+        return
+
+    await update.message.reply_text(
+        "✅ Bienvenido. Puedes usar /filtrar con tarjetas separadas por espacio."
+    )
+
+
 async def filtrar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
 
     if not is_allowed_user(user_id):
-        await update.message.reply_text("❌ No tienes permiso para usar este bot.")
+        await handle_unauthorized_user(update, context)
         return
 
     if not context.args:
@@ -141,8 +179,10 @@ def main() -> None:
         raise RuntimeError("Falta TELEGRAM_BOT_TOKEN en el entorno")
 
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("filtrar", filtrar))
     app.add_handler(CommandHandler("status", status))
+    app.add_handler(MessageHandler(filters.ALL, handle_unauthorized_user))
     app.run_polling(drop_pending_updates=True)
 
 
