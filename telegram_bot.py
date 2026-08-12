@@ -62,21 +62,33 @@ def build_progress_message(tarjetas: List[str], estados: List[str]) -> str:
     return "\n".join(lines)
 
 
+async def safe_edit_message(message, new_text: str) -> None:
+    try:
+        current_text = message.text or ""
+        if current_text == new_text:
+            return
+        await message.edit_text(new_text)
+    except Exception as exc:
+        msg = str(exc)
+        if "Message is not modified" not in msg:
+            logger.warning(f"No se pudo editar mensaje de progreso: {exc}")
+
+
 async def process_filter_batch_live(user_id: int, tarjetas: List[str], progress_message) -> List[str]:
     estados = ["⏳" for _ in tarjetas]
-    await progress_message.edit_text(build_progress_message(tarjetas, estados))
+    await safe_edit_message(progress_message, build_progress_message(tarjetas, estados))
 
     resultados: List[str] = []
     for idx, tarjeta in enumerate(tarjetas):
         valido, limpio = validar_tarjeta(tarjeta)
         if not valido:
             estados[idx] = "❌"
-            await progress_message.edit_text(build_progress_message(tarjetas, estados))
+            await safe_edit_message(progress_message, build_progress_message(tarjetas, estados))
             resultados.append(f"❌ {tarjeta}")
             continue
 
         estados[idx] = "⏳"
-        await progress_message.edit_text(build_progress_message(tarjetas, estados))
+        await safe_edit_message(progress_message, build_progress_message(tarjetas, estados))
 
         ok = await procesar_tarjeta(limpio)
         if ok:
@@ -86,15 +98,15 @@ async def process_filter_batch_live(user_id: int, tarjetas: List[str], progress_
             estados[idx] = "❌"
             resultados.append(f"❌ {limpio}")
 
-        await progress_message.edit_text(build_progress_message(tarjetas, estados))
+        await safe_edit_message(progress_message, build_progress_message(tarjetas, estados))
 
     aprobadas = [item.replace("✅ ", "").strip() for item in resultados if item.startswith("✅")]
     if aprobadas:
         final_text = "✅ Tarjetas aprobadas:\n\n" + "\n".join(aprobadas)
-        await progress_message.edit_text(final_text)
+        await safe_edit_message(progress_message, final_text)
         return aprobadas
 
-    await progress_message.edit_text("❌ No se encontraron tarjetas aprobadas.")
+    await safe_edit_message(progress_message, "❌ No se encontraron tarjetas aprobadas.")
     return []
 
 
