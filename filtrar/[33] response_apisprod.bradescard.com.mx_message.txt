@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 12 Aug 2026 22:00:34 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Access-Control-Allow-Origin: https://apisprod.bradescard.com.mx
+Access-Control-Allow-Credentials: true
+
+a7
+{"code":0,"description":"OK","recoverPasswordID":"dc8f721f-993a-4681-897e-b5f7e8283ddc","meansOfContact":[{"type":"PHONE","value":"55******33","remainingAttempts":3}]}
+0
+

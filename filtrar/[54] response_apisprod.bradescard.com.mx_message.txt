@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 12 Aug 2026 22:02:20 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Access-Control-Allow-Origin: https://apisprod.bradescard.com.mx
+Access-Control-Allow-Credentials: true
+
+a6
+{"code":2,"description":"¡Oh, oh! Tu tarjeta no esta dada de alta, por favor regístrate para consultar tus movimientos.","recoverPasswordID":"","meansOfContact":[]}
+0
+

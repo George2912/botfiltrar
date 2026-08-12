@@ -1,0 +1,8 @@
+HTTP/1.1 500 Internal Server Error
+Server: nginx
+Date: Wed, 12 Aug 2026 22:01:26 GMT
+Content-Length: 0
+Connection: keep-alive
+Access-Control-Allow-Origin: https://apisprod.bradescard.com.mx
+Access-Control-Allow-Credentials: true
+

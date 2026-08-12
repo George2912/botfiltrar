@@ -1,0 +1,15 @@
+POST /GatewayMS/RecuperacionAccesoClienteMS/v1/reset/by-card-number HTTP/1.1
+x-dynatrace: MT_3_110_1559868015_3-0_227902a3-f1f4-4b69-ae9e-26016714fed4_50_57_138
+accept: */*
+platform: android
+Referer: https://apisprod.bradescard.com.mx
+Origin: https://apisprod.bradescard.com.mx
+X-Device-Hash: n8S2zZ8yJPl+cXJItzGdmB2K8e4zDuCwFFb2LeeBfyrU0RVCLUHA4C9ORU0EMrbYHBr26OIkzOaAGxM3x0ytdh8mgT47zcHz8rrfI+wEA/u6JxE67CeCcPEEkoiAGX1sJGGkZlvJhXnGj2Ztzdl5HDsJ5NFv88A8C15AneEAClAQ/dXg6zSpwlFY7UBNrtndDIA0RtSwVRfy9Qrk1VfPRPuzkD0pKtCOynKpPPBl8+lmp+3QT4vF8aVd0MK+EETm81P4QoF8KrfrcCFM4uMCBeZyLzu6z8qqmUOHvBsm91h2CLdy+4nBgjjb+w4cpCjc5smSk//XzTLpe7hkYHzQmA==
+Content-Type: application/json; charset=UTF-8
+Content-Length: 500
+Host: apisprod.bradescard.com.mx
+Connection: Keep-Alive
+Accept-Encoding: gzip
+User-Agent: okhttp/5.0.0-alpha.11
+
+{"cardNumber":"T0UB31VDpb/xm1gp7lmRGrXQbtOTgkmKDYVyp4ktDOBO/wsQsjyU0K2pfZIe7QmkwjVnRsKB7SqpnS1gxZS0W+4UW3KZBwXrVrqENKCrTBipTZdb1ErZ4izd96b6xb+H865psZNvsc4iUD0EGF1AxHaNSE2W7o2e22vS59lbYMP3kGoqI9iZW+EzZO2QE6v8a/aFUcxiXE4Mh5ZpPo7kGLMAFBhTyabak+PQiT4KP1+STv+DXi4bPgjEEqKeTKuZ0K5BKYLYqnRgiVrtR41U7wP46pGOJ07tRAr0RLFlEiZbQTMpcAiIToryCLYbuWVe8SaJUT/q9FTRPkO4ZxQe1Q\u003d\u003d","deviceId":"f0f71a77-31fe-4513-a024-245f19bfe86b","latitude":29.1504401,"longitude":-111.0087555,"origin":"APP","type":"RECOVER"}
