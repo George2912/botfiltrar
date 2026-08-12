@@ -48,23 +48,53 @@ def is_valid_filter_response(data: dict, status: int) -> bool:
     return False
 
 
-async def procesar_tarjeta(tarjeta: str) -> str:
+async def procesar_tarjeta(tarjeta: str) -> bool:
     encrypted = encriptar_tarjeta(tarjeta)
     data = await BradesAPI.filter_card(encrypted)
-    if is_valid_filter_response(data or {}, 200 if data is not None else 500):
-        return f"✅ {tarjeta}"
-    return f"❌ {tarjeta}"
+    return is_valid_filter_response(data or {}, 200 if data is not None else 500)
 
 
-async def process_filter_batch(user_id: int, tarjetas: List[str]) -> List[str]:
-    results: List[str] = []
-    for tarjeta in tarjetas:
+def build_progress_message(tarjetas: List[str], estados: List[str]) -> str:
+    lines = []
+    for idx, tarjeta in enumerate(tarjetas):
+        lines.append(f"{estados[idx]} {tarjeta}")
+    return "\n".join(lines)
+
+
+async def process_filter_batch_live(user_id: int, tarjetas: List[str], progress_message) -> List[str]:
+    estados = ["⏳" for _ in tarjetas]
+    await progress_message.edit_text(build_progress_message(tarjetas, estados))
+
+    resultados: List[str] = []
+    for idx, tarjeta in enumerate(tarjetas):
         valido, limpio = validar_tarjeta(tarjeta)
         if not valido:
-            results.append(f"❌ {tarjeta}")
+            estados[idx] = "❌"
+            await progress_message.edit_text(build_progress_message(tarjetas, estados))
+            resultados.append(f"❌ {tarjeta}")
             continue
-        results.append(await procesar_tarjeta(limpio))
-    return results
+
+        estados[idx] = "⏳"
+        await progress_message.edit_text(build_progress_message(tarjetas, estados))
+
+        ok = await procesar_tarjeta(limpio)
+        if ok:
+            estados[idx] = "✅"
+            resultados.append(f"✅ {limpio}")
+        else:
+            estados[idx] = "❌"
+            resultados.append(f"❌ {limpio}")
+
+        await progress_message.edit_text(build_progress_message(tarjetas, estados))
+
+    aprobadas = [item.replace("✅ ", "").strip() for item in resultados if item.startswith("✅")]
+    if aprobadas:
+        final_text = "✅ Tarjetas aprobadas:\n\n" + "\n".join(aprobadas)
+        await progress_message.edit_text(final_text)
+        return aprobadas
+
+    await progress_message.edit_text("❌ No se encontraron tarjetas aprobadas.")
+    return []
 
 
 async def filtrar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -87,19 +117,19 @@ async def filtrar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f"❌ Máximo {MAX_TARJETAS_PER_REQUEST} tarjetas por lote.")
         return
 
-    await update.message.reply_text(f"⏳ Revisando {len(tarjetas)} tarjeta(s)...")
+    status_message = await update.message.reply_text(f"⏳ Revisando {len(tarjetas)} tarjeta(s)...")
 
     try:
         async with queue_manager.global_guard():
             async with queue_manager.user_guard(user_id):
-                resultados = await process_filter_batch(user_id, tarjetas)
+                resultados = await process_filter_batch_live(user_id, tarjetas, status_message)
     except Exception as exc:
         logger.exception("Error en /filtrar")
-        await update.message.reply_text(f"❌ Error interno: {exc}")
+        await status_message.edit_text(f"❌ Error interno: {exc}")
         return
 
-    out = "\n".join(resultados)
-    await update.message.reply_text(out)
+    if not resultados:
+        await status_message.edit_text("❌ No se encontraron tarjetas aprobadas.")
 
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
