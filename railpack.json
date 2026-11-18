@@ -1,0 +1,9 @@
+
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "python",
+  "deploy": {
+    "startCommand": "python telegram_bot.py",
+    "restart": "on-failure"
+  }
+}
